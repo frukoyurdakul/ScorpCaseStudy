@@ -38,6 +38,6 @@ class ViewHolder(binding: ItemPersonBinding): BaseViewHolder<Person, ItemPersonB
 
 object PersonComparator: DiffUtil.ItemCallback<Person>()
 {
-    override fun areItemsTheSame(oldItem: Person, newItem: Person) = oldItem == newItem
+    override fun areItemsTheSame(oldItem: Person, newItem: Person) = oldItem.id == newItem.id
     override fun areContentsTheSame(oldItem: Person, newItem: Person) = oldItem == newItem
 }
