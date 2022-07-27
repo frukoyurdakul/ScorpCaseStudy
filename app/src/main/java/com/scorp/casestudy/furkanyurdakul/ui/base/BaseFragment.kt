@@ -18,17 +18,27 @@ abstract class BaseFragment<VDB: ViewDataBinding>: Fragment()
 
     protected abstract suspend fun setupUi()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View?
+    final override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View?
     {
         _binding = DataBindingUtil.inflate(layoutInflater, layoutId, container, false)
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?)
+    final override fun onViewCreated(view: View, savedInstanceState: Bundle?)
     {
         super.onViewCreated(view, savedInstanceState)
-        withLifecycle { setupUi() }
+        withLifecycle {
+            setupUi()
+        }
     }
+
+    /**
+     * Called when navigation bar back button or toolbar back button is
+     * pressed.
+     *
+     * @return true to override default behavior
+     */
+    open fun onBackPress() = false
 
     override fun onDestroyView()
     {
