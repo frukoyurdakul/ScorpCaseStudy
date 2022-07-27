@@ -7,6 +7,7 @@ import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import com.scorp.casestudy.furkanyurdakul.R
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
@@ -73,6 +74,13 @@ fun Fragment.navigate(navDirections: NavDirections)
 
         // Finalize the navigation.
         controller.navigate(navDirections, navOptions)
+    }
+}
+
+fun <T> CancellableContinuation<T>.performResume(value: T)
+{
+    runCatching {
+        resumeWith(Result.success(value))
     }
 }
 
