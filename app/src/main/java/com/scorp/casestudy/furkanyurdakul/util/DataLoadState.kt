@@ -3,10 +3,10 @@ package com.scorp.casestudy.furkanyurdakul.util
 import androidx.paging.LoadState
 
 data class DataLoadState(
-    val isLoading: Boolean,
-    val isEnded: Boolean,
-    val isError: Boolean,
-    val errorMessage: String
+    val isLoading: Boolean = false,
+    val isEnded: Boolean = false,
+    val isError: Boolean = false,
+    val errorMessage: String = ""
 )
 
 fun LoadState.toDataLoadState(): DataLoadState

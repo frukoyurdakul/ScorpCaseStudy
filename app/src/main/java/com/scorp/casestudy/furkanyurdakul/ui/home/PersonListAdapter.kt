@@ -2,33 +2,60 @@ package com.scorp.casestudy.furkanyurdakul.ui.home
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
+import com.scorp.casestudy.furkanyurdakul.R
 import com.scorp.casestudy.furkanyurdakul.data.model.Person
+import com.scorp.casestudy.furkanyurdakul.databinding.ItemLoadStateMatchBinding
+import com.scorp.casestudy.furkanyurdakul.databinding.ItemLoadStateWrapBinding
 import com.scorp.casestudy.furkanyurdakul.databinding.ItemPersonBinding
+import com.scorp.casestudy.furkanyurdakul.ui.base.BaseDisplayItem
 import com.scorp.casestudy.furkanyurdakul.ui.base.BaseViewHolder
+import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.FirstLoadStateDisplayItem
+import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.ItemLoadStateDisplayItem
+import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.PersonDisplayItem
+import com.scorp.casestudy.furkanyurdakul.util.DataLoadState
 
-class PersonListAdapter: PagingDataAdapter<Person, ViewHolder>(PersonComparator)
+class PersonListAdapter: ListAdapter<BaseDisplayItem, RecyclerView.ViewHolder>(PersonComparator)
 {
     private lateinit var layoutInflater: LayoutInflater
 
-    override fun onBindViewHolder(holder: ViewHolder, position: Int)
-    {
-        getItem(position)?.let {
-            holder.bind(it)
-        }
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder
     {
         if (!this::layoutInflater.isInitialized)
             layoutInflater = LayoutInflater.from(parent.context)
 
-        return ViewHolder(ItemPersonBinding.inflate(layoutInflater, parent, false))
+        return when (viewType)
+        {
+            R.layout.item_person ->
+                PersonViewHolder(ItemPersonBinding.inflate(layoutInflater, parent, false))
+            R.layout.item_load_state_wrap ->
+                LoadStateMatchViewHolder(ItemLoadStateMatchBinding.inflate(layoutInflater, parent, false))
+            R.layout.item_load_state_match ->
+                LoadStateWrapViewHolder(ItemLoadStateWrapBinding.inflate(layoutInflater, parent, false))
+            else -> throw IllegalArgumentException("Unknown view type: 0x${Integer.toHexString(viewType)}")
+        }
+    }
+
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int)
+    {
+        when (val item = getItem(position))
+        {
+            is FirstLoadStateDisplayItem -> (holder as LoadStateMatchViewHolder).bind(item.loadState)
+            is ItemLoadStateDisplayItem -> (holder as LoadStateWrapViewHolder).bind(item.loadState)
+            is PersonDisplayItem -> (holder as PersonViewHolder).bind(item.person)
+        }
+    }
+
+    override fun getItemViewType(position: Int): Int
+    {
+        return getItem(position).layoutId
     }
 }
 
-class ViewHolder(binding: ItemPersonBinding): BaseViewHolder<Person, ItemPersonBinding>(binding)
+class PersonViewHolder(binding: ItemPersonBinding): BaseViewHolder<Person, ItemPersonBinding>(binding)
 {
     override fun bind(item: Person)
     {
@@ -36,8 +63,26 @@ class ViewHolder(binding: ItemPersonBinding): BaseViewHolder<Person, ItemPersonB
     }
 }
 
-object PersonComparator: DiffUtil.ItemCallback<Person>()
+class LoadStateMatchViewHolder(binding: ItemLoadStateMatchBinding)
+    : BaseViewHolder<DataLoadState, ItemLoadStateMatchBinding>(binding)
 {
-    override fun areItemsTheSame(oldItem: Person, newItem: Person) = oldItem.id == newItem.id
-    override fun areContentsTheSame(oldItem: Person, newItem: Person) = oldItem == newItem
+    override fun bind(item: DataLoadState)
+    {
+        binding.item = item
+    }
+}
+
+class LoadStateWrapViewHolder(binding: ItemLoadStateWrapBinding)
+    : BaseViewHolder<DataLoadState, ItemLoadStateWrapBinding>(binding)
+{
+    override fun bind(item: DataLoadState)
+    {
+        binding.item = item
+    }
+}
+
+object PersonComparator: DiffUtil.ItemCallback<BaseDisplayItem>()
+{
+    override fun areItemsTheSame(oldItem: BaseDisplayItem, newItem: BaseDisplayItem) = oldItem == newItem
+    override fun areContentsTheSame(oldItem: BaseDisplayItem, newItem: BaseDisplayItem) = oldItem == newItem
 }

@@ -104,6 +104,9 @@ dependencies {
     // Pagination
     implementation "androidx.paging:paging-runtime-ktx:$paging_lib_version"
 
+    // Swipe to refresh
+    implementation "androidx.swiperefreshlayout:swiperefreshlayout:$swipe_to_refresh_version"
+
     // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutines_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlin_coroutines_version"

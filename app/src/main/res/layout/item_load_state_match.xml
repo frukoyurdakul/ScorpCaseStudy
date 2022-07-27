@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <import type="com.scorp.casestudy.furkanyurdakul.util.DataLoadState" />
+        <variable
+            name="item"
+            type="DataLoadState" />
+    </data>
+
+    <LinearLayout
+        android:id="@+id/containerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            isVisible="@{item.loading &amp;&amp; !item.ended}"/>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/errorMessageTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:textSize="15sp"
+            android:text="@{item.errorMessage}"
+            isVisible="@{item.error}"
+            tools:text="Error Message" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/tryAgainButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/try_again"
+            isVisible="@{item.error}"
+            app:rippleColor="#40ffffff" />
+
+    </LinearLayout>
+
+</layout>

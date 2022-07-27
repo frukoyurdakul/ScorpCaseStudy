@@ -7,7 +7,6 @@ import com.scorp.casestudy.furkanyurdakul.databinding.FragmentHomeBinding
 import com.scorp.casestudy.furkanyurdakul.ui.base.BaseFragment
 import com.scorp.casestudy.furkanyurdakul.util.withLifecycle
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
 
 @AndroidEntryPoint
 class HomeFragment : BaseFragment<FragmentHomeBinding>()
@@ -26,9 +25,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>()
         }
 
         withLifecycle {
-            viewModel.loadPeople().collectLatest { pagingData ->
-                listAdapter.submitData(pagingData)
-            }
+            binding.swipeToRefreshLayout.isRefreshing = false
         }
     }
 }
