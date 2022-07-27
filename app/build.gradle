@@ -102,7 +102,7 @@ dependencies {
     kapt "androidx.hilt:hilt-compiler:$hilt_version"
 
     // Pagination
-    implementation "androidx.paging:paging-runtime:$paging_lib_version"
+    implementation "androidx.paging:paging-runtime-ktx:$paging_lib_version"
 
     // Coroutines
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutines_version"

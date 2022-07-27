@@ -1,10 +1,13 @@
 package com.scorp.casestudy.furkanyurdakul.ui.home
 
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.scorp.casestudy.furkanyurdakul.R
 import com.scorp.casestudy.furkanyurdakul.databinding.FragmentHomeBinding
 import com.scorp.casestudy.furkanyurdakul.ui.base.BaseFragment
+import com.scorp.casestudy.furkanyurdakul.util.withLifecycle
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
 
 @AndroidEntryPoint
 class HomeFragment : BaseFragment<FragmentHomeBinding>()
@@ -15,6 +18,17 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>()
 
     override suspend fun setupUi()
     {
+        val listAdapter = PersonListAdapter()
+        with (binding.recyclerView)
+        {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = listAdapter
+        }
 
+        withLifecycle {
+            viewModel.loadPeople().collectLatest { pagingData ->
+                listAdapter.submitData(pagingData)
+            }
+        }
     }
 }
