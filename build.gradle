@@ -1,8 +1,8 @@
 buildscript {
     ext {
         kotlin_version = "1.7.0"
-        navSafeArgsVersion = "2.5.0"
-        nav_version = "2.5.0"
+        navSafeArgsVersion = "2.5.1"
+        nav_version = "2.5.1"
 
         kotlin_coroutines_version = "1.6.3"
         ktx_version = "1.8.0"
