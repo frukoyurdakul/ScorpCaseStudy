@@ -16,8 +16,10 @@
         android:layout_height="wrap_content"
         android:maxLines="1"
         android:ellipsize="end"
+        android:paddingVertical="6dp"
+        android:textSize="20sp"
         personInfo="@{item}"
-        app:autoSizeMaxTextSize="16sp"
+        app:autoSizeMaxTextSize="20sp"
         app:autoSizeMinTextSize="12sp"
         app:autoSizeTextType="uniform"
         tools:text="Person Full Name (Person ID)"/>
