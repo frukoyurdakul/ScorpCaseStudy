@@ -17,7 +17,8 @@ import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.ItemLoadStateDisp
 import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.PersonDisplayItem
 import com.scorp.casestudy.furkanyurdakul.util.DataState
 
-class PersonListAdapter: ListAdapter<BaseDisplayItem, RecyclerView.ViewHolder>(PersonComparator)
+class PersonListAdapter(private val clickAction: (Boolean, Boolean) -> Unit)
+    : ListAdapter<BaseDisplayItem, RecyclerView.ViewHolder>(PersonComparator)
 {
     private lateinit var layoutInflater: LayoutInflater
 
@@ -31,13 +32,14 @@ class PersonListAdapter: ListAdapter<BaseDisplayItem, RecyclerView.ViewHolder>(P
             R.layout.item_person ->
                 PersonViewHolder(ItemPersonBinding.inflate(layoutInflater, parent, false))
             R.layout.item_load_state_match ->
-                LoadStateMatchViewHolder(ItemLoadStateMatchBinding.inflate(layoutInflater, parent, false))
+                LoadStateMatchViewHolder(ItemLoadStateMatchBinding
+                    .inflate(layoutInflater, parent, false), clickAction)
             R.layout.item_load_state_wrap ->
-                LoadStateWrapViewHolder(ItemLoadStateWrapBinding.inflate(layoutInflater, parent, false))
+                LoadStateWrapViewHolder(ItemLoadStateWrapBinding
+                    .inflate(layoutInflater, parent, false), clickAction)
             else -> throw IllegalArgumentException("Unknown view type: 0x${Integer.toHexString(viewType)}")
         }
     }
-
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int)
     {
@@ -63,18 +65,34 @@ class PersonViewHolder(binding: ItemPersonBinding): BaseViewHolder<Person, ItemP
     }
 }
 
-class LoadStateMatchViewHolder(binding: ItemLoadStateMatchBinding)
+class LoadStateMatchViewHolder(binding: ItemLoadStateMatchBinding,
+    private val clickAction: (Boolean, Boolean) -> Unit)
     : BaseViewHolder<DataState, ItemLoadStateMatchBinding>(binding)
 {
+    init
+    {
+        binding.tryAgainButton.setOnClickListener {
+            binding.item?.let { item -> clickAction(item.isError, item.isEnded) }
+        }
+    }
+
     override fun bind(item: DataState)
     {
         binding.item = item
     }
 }
 
-class LoadStateWrapViewHolder(binding: ItemLoadStateWrapBinding)
+class LoadStateWrapViewHolder(binding: ItemLoadStateWrapBinding,
+    private val clickAction: (Boolean, Boolean) -> Unit)
     : BaseViewHolder<DataState, ItemLoadStateWrapBinding>(binding)
 {
+    init
+    {
+        binding.tryAgainButton.setOnClickListener {
+            binding.item?.let { item -> clickAction(item.isError, item.isEnded) }
+        }
+    }
+
     override fun bind(item: DataState)
     {
         binding.item = item

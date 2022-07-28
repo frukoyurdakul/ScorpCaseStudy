@@ -1,7 +1,9 @@
 package com.scorp.casestudy.furkanyurdakul.ui.home
 
+import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import com.scorp.casestudy.furkanyurdakul.R
 import com.scorp.casestudy.furkanyurdakul.databinding.FragmentHomeBinding
 import com.scorp.casestudy.furkanyurdakul.ui.base.BaseFragment
@@ -18,7 +20,7 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>()
 
     override suspend fun setupUi()
     {
-        val listAdapter = PersonListAdapter()
+        val listAdapter = PersonListAdapter(this::onLoadStateButtonClick)
         with (binding.recyclerView)
         {
             setHasFixedSize(true)
@@ -46,6 +48,22 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>()
             binding.swipeToRefreshLayout.isEnabled = !state.isLoading
         }
 
+        viewModel.backendErrorState.observe(viewLifecycleOwner) { error ->
+            withLifecycle {
+                activity?.findViewById<View?>(android.R.id.content)?.let { contentView ->
+                    Snackbar.make(contentView, error, Snackbar.LENGTH_SHORT).show()
+                }
+            }
+        }
+
         viewModel.loadPeople()
+    }
+
+    private fun onLoadStateButtonClick(isError: Boolean, isEnded: Boolean)
+    {
+        if (isEnded)
+            viewModel.refreshPeople()
+        else
+            viewModel.loadPeople(retry = isError)
     }
 }
