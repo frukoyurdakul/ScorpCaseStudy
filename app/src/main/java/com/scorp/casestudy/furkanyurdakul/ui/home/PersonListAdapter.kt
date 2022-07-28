@@ -15,7 +15,7 @@ import com.scorp.casestudy.furkanyurdakul.ui.base.BaseViewHolder
 import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.FirstLoadStateDisplayItem
 import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.ItemLoadStateDisplayItem
 import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.PersonDisplayItem
-import com.scorp.casestudy.furkanyurdakul.util.DataLoadState
+import com.scorp.casestudy.furkanyurdakul.util.DataState
 
 class PersonListAdapter: ListAdapter<BaseDisplayItem, RecyclerView.ViewHolder>(PersonComparator)
 {
@@ -30,9 +30,9 @@ class PersonListAdapter: ListAdapter<BaseDisplayItem, RecyclerView.ViewHolder>(P
         {
             R.layout.item_person ->
                 PersonViewHolder(ItemPersonBinding.inflate(layoutInflater, parent, false))
-            R.layout.item_load_state_wrap ->
-                LoadStateMatchViewHolder(ItemLoadStateMatchBinding.inflate(layoutInflater, parent, false))
             R.layout.item_load_state_match ->
+                LoadStateMatchViewHolder(ItemLoadStateMatchBinding.inflate(layoutInflater, parent, false))
+            R.layout.item_load_state_wrap ->
                 LoadStateWrapViewHolder(ItemLoadStateWrapBinding.inflate(layoutInflater, parent, false))
             else -> throw IllegalArgumentException("Unknown view type: 0x${Integer.toHexString(viewType)}")
         }
@@ -64,18 +64,18 @@ class PersonViewHolder(binding: ItemPersonBinding): BaseViewHolder<Person, ItemP
 }
 
 class LoadStateMatchViewHolder(binding: ItemLoadStateMatchBinding)
-    : BaseViewHolder<DataLoadState, ItemLoadStateMatchBinding>(binding)
+    : BaseViewHolder<DataState, ItemLoadStateMatchBinding>(binding)
 {
-    override fun bind(item: DataLoadState)
+    override fun bind(item: DataState)
     {
         binding.item = item
     }
 }
 
 class LoadStateWrapViewHolder(binding: ItemLoadStateWrapBinding)
-    : BaseViewHolder<DataLoadState, ItemLoadStateWrapBinding>(binding)
+    : BaseViewHolder<DataState, ItemLoadStateWrapBinding>(binding)
 {
-    override fun bind(item: DataLoadState)
+    override fun bind(item: DataState)
     {
         binding.item = item
     }

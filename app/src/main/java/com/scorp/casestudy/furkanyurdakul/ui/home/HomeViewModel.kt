@@ -10,7 +10,8 @@ import com.scorp.casestudy.furkanyurdakul.ui.base.BaseViewModel
 import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.FirstLoadStateDisplayItem
 import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.ItemLoadStateDisplayItem
 import com.scorp.casestudy.furkanyurdakul.ui.home.adapteritems.PersonDisplayItem
-import com.scorp.casestudy.furkanyurdakul.util.DataLoadState
+import com.scorp.casestudy.furkanyurdakul.util.DataState
+import com.scorp.casestudy.furkanyurdakul.util.LoadState
 import com.scorp.casestudy.furkanyurdakul.util.TaskDispatchers
 import com.scorp.casestudy.furkanyurdakul.util.performResume
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,56 +26,133 @@ class HomeViewModel @Inject constructor(
     private val _loadedLiveData: MutableLiveData<List<BaseDisplayItem>> = MutableLiveData()
     val liveData: LiveData<List<BaseDisplayItem>> = _loadedLiveData
 
-    private val loadedList: MutableList<Person> = ArrayList(50)
+    private val _loadState: MutableLiveData<LoadState> = MutableLiveData()
+    val loadState: LiveData<LoadState> = _loadState
+
+    private val loadedList: MutableSet<Person> = LinkedHashSet(50)
     private val displayList: MutableList<BaseDisplayItem> = ArrayList(50)
 
     private var lastLoadJob: Job? = null
-
     private var lastKey: String? = null
 
-    fun loadPeople()
+    private var endOfListReached = false
+    private var blockNextRequest = false
+
+    fun loadPeople(force: Boolean = false, retry: Boolean = false)
     {
-        viewModelScope.launch {
-            lastLoadJob?.join()
-            lastLoadJob = TaskDispatchers.IOScope.launch {
+        if (!force && !retry && blockNextRequest)
+            return
 
-                var isFirst = true
-                if (loadedList.isEmpty())
-                    displayList.add(FirstLoadStateDisplayItem(DataLoadState(isLoading = true)))
-                else
-                {
-                    displayList.add(ItemLoadStateDisplayItem(DataLoadState(isLoading = true)))
-                    isFirst = false
+        if (endOfListReached)
+        {
+            if (displayList.lastOrNull() !is PersonDisplayItem)
+            {
+                displayList.removeLast()
+                viewModelScope.launch {
+                    dispatchList()
                 }
+                return
+            }
+        }
 
+        endOfListReached = false
+        blockNextRequest = false
+        viewModelScope.launch {
+            lastLoadJob?.let {
+                if (it.isActive)
+                    return@launch
+            }
+
+            dispatchLoadState(LoadState.Loading)
+            lastLoadJob = TaskDispatchers.IOScope.launch {
+                if (displayList.isNotEmpty() && displayList.lastOrNull() !is PersonDisplayItem)
+                    displayList.removeLast()
+
+                if (loadedList.isEmpty())
+                    displayList.add(FirstLoadStateDisplayItem(DataState(isLoading = true)))
+                else
+                    displayList.add(ItemLoadStateDisplayItem(DataState(isLoading = true)))
+
+                dispatchList()
                 suspendCancellableCoroutine<Unit?> { cont ->
                     dataSource.fetch(lastKey) { fetchResponse, fetchError ->
-                        displayList.removeLast()
                         fetchResponse?.let { response ->
-                            displayList.addAll(response.people.map { PersonDisplayItem(it) })
-                        } ?: run {
-                            if (isFirst)
+                            val changed = loadedList.addAll(response.people)
+                            if (changed)
                             {
-                                displayList.add(FirstLoadStateDisplayItem(DataLoadState(
-                                    isError = true,
-                                    errorMessage = fetchError!!.errorDescription
-                                )))
+                                displayList.clear()
+                                displayList.addAll(loadedList.map { PersonDisplayItem(it) })
+
+                                // Determine whether we have more people or not.
+                                response.next?.let {
+                                    // Assign the last key.
+                                    lastKey = it
+
+                                    // Add a last item so that when scrolled down, it won't bug
+                                    // out the recycler view.
+                                    displayList.add(ItemLoadStateDisplayItem(
+                                        DataState(isLoading = true))
+                                    )
+                                } ?: run {
+
+                                    // End of the list was reached. Edit the message
+                                    // so that the user will know the end of list
+                                    // was reached.
+                                    endOfListReached = true
+                                    displayList.removeLast()
+                                    handleMessage(
+                                        message = "All people have been listed.",
+                                        isEndOfList = true
+                                    )
+                                }
                             }
                             else
                             {
-                                displayList.add(ItemLoadStateDisplayItem(DataLoadState(
-                                    isError = true,
-                                    errorMessage = fetchError!!.errorDescription
-                                )))
+                                // Remove the loading item.
+                                displayList.removeLast()
+
+                                // This could be handled with localization,
+                                // but hard-coded since other errors are
+                                // also hard-coded on the data source.
+                                if (loadedList.isEmpty())
+                                {
+                                    handleMessage(message = "No people to display.",
+                                        isError = true)
+                                }
+                                else if (response.people.isEmpty())
+                                {
+                                    handleMessage(message = "An empty people list was returned.",
+                                        isError = true)
+                                }
+                                else
+                                {
+                                    handleMessage(message = "No other people to display.",
+                                        isError = true)
+                                }
                             }
-                            cont.performResume(null)
+                        } ?: run {
+                            // Remove the loading item.
+                            displayList.removeLast()
+                            handleMessage(
+                                message = fetchError!!.errorDescription,
+                                isError = true
+                            )
                         }
+
+                        // Resume the suspending function
+                        cont.performResume(null)
                     }
                 }
 
+                // Update the loading state and the button
+                if (endOfListReached)
+                    dispatchLoadState(LoadState.EndOfList)
+                else
+                    dispatchLoadState(LoadState.NotLoading)
+
                 withContext(Dispatchers.Main)
                 {
-                    _loadedLiveData.value = displayList
+                    _loadedLiveData.value = ArrayList(displayList)
                 }
             }
         }
@@ -84,8 +162,54 @@ class HomeViewModel @Inject constructor(
     {
         viewModelScope.launch {
             lastLoadJob?.join()
+            loadedList.clear()
             displayList.clear()
-            loadPeople()
+            lastKey = null
+            endOfListReached = false
+            loadPeople(force = true, retry = false)
+        }
+    }
+
+    private fun handleMessage(message: String, isEndOfList: Boolean = false, isError: Boolean = false)
+    {
+        blockNextRequest = true
+        if (displayList.isEmpty())
+        {
+            displayList.add(FirstLoadStateDisplayItem(DataState(
+                showMessage = true,
+                isError = isError,
+                isEnded = isEndOfList,
+                message = message
+            )))
+        }
+        else
+        {
+            displayList.add(ItemLoadStateDisplayItem(DataState(
+                showMessage = true,
+                isError = isError,
+                isEnded = isEndOfList,
+                message = message
+            )))
+        }
+    }
+
+    private suspend fun dispatchList()
+    {
+        withContext(Dispatchers.Main)
+        {
+            // Create a new instance list that contains
+            // the original elements for the DiffUtil to not
+            // be confused in the future while comparing
+            // elements.
+            _loadedLiveData.value = ArrayList(displayList)
+        }
+    }
+
+    private suspend fun dispatchLoadState(state: LoadState)
+    {
+        withContext(Dispatchers.Main)
+        {
+            _loadState.value = state
         }
     }
 }
