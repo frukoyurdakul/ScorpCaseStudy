@@ -29,6 +29,9 @@ class HomeViewModel @Inject constructor(
     private val _loadState: MutableLiveData<LoadState> = MutableLiveData()
     val loadState: LiveData<LoadState> = _loadState
 
+    private val _backendErrorState: MutableLiveData<String> = MutableLiveData()
+    val backendErrorState: LiveData<String> = _backendErrorState
+
     private val loadedList: MutableSet<Person> = LinkedHashSet(50)
     private val displayList: MutableList<BaseDisplayItem> = ArrayList(50)
 
@@ -77,7 +80,21 @@ class HomeViewModel @Inject constructor(
                 suspendCancellableCoroutine<Unit?> { cont ->
                     dataSource.fetch(lastKey) { fetchResponse, fetchError ->
                         fetchResponse?.let { response ->
+                            val previousSize = loadedList.size
                             val changed = loadedList.addAll(response.people)
+                            val sizeDiff = loadedList.size - previousSize
+                            val existingSize = response.people.size - sizeDiff
+
+                            if (existingSize != 0)
+                            {
+                                // There was a backend bug. Show a toast with
+                                // a UI callback.
+                                val messageSuffix = if (existingSize == 1) "person" else "people"
+                                _backendErrorState.postValue("There was " +
+                                        "$existingSize $messageSuffix " +
+                                        "that was already added in the list.")
+                            }
+
                             if (changed)
                             {
                                 displayList.clear()
