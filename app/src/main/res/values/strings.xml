@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">ScorpCaseStudy</string>
+    <string name="app_name">My Application</string>
+    <string name="try_again">TRY AGAIN</string>
+    <string name="reload">RELOAD</string>
 </resources>
